@@ -7,6 +7,8 @@ import Immutable from 'immutable';
 import { Modal, GamesListManager } from '../components';
 // we import the action-creators to be binde with bindActionCreators
 import * as gamesActionCreators from '../actions/games';
+import * as authActionCreators from '../actions/auth';
+import { toastr } from 'react-redux-toastr';
 
 // We do not export GamesContainer as it is 'almost' a dumb component
 class GamesContainer extends Component {
@@ -15,6 +17,7 @@ class GamesContainer extends Component {
     this.toggleModal = this.toggleModal.bind(this);
     this.deleteGame = this.deleteGame.bind(this);
     this.setSearchBar = this.setSearchBar.bind(this);
+    this.logout = this.logout.bind(this);
   }
 
   componentDidMount () {
@@ -38,8 +41,14 @@ class GamesContainer extends Component {
     this.props.gamesActions.setSearchBar(event.target.value.toLowerCase());
   }
 
+  logout () {
+    this.props.authActions.logoutUser();
+    toastr.success('Retrogames archive', 'Your are now logged out');
+    localStorage.removeItem('token');
+  }
+
   render () {
-    const { games, selectedGame, searchBar } = this.props;
+    const { games, selectedGame, searchBar, userName } = this.props;
     return (
       <div>
         <Modal game={selectedGame} />
@@ -49,6 +58,8 @@ class GamesContainer extends Component {
           setSearchBar={this.setSearchBar}
           toggleModal={this.toggleModal}
           deleteGame={this.deleteGame}
+          userName={userName}
+          logout={this.logout}
         />
       </div>
     );
@@ -60,13 +71,15 @@ function mapStateToProps (state) {
   return { // We get all the games to list in the page
     games: state.getIn(['games', 'list'], Immutable.List()).toJS(),
     searchBar: state.getIn(['games', 'searchBar'], ''),
-    selectedGame: state.getIn(['games', 'selectedGame'], Immutable.List()).toJS() 
+    selectedGame: state.getIn(['games', 'selectedGame'], Immutable.List()).toJS(),
+    userName: state.getIn(['auth', 'name'])
   }
 }
 // We can dispatch actions to the reducer and sagas
 function mapDispatchToProps (dispatch) {
   return {
-    gamesActions: bindActionCreators(gamesActionCreators, dispatch)
+    gamesActions: bindActionCreators(gamesActionCreators, dispatch),
+    authActions: bindActionCreators(authActionCreators, dispatch)
   };
 }
 // Finally we export the connected GamesContainer
